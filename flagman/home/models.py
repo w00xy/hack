@@ -30,7 +30,7 @@ class User(models.Model):
 class Transactions(models.Model):
     name = models.CharField(max_length=255, verbose_name='Название транзакции')
     tags = models.ForeignKey('Tags', blank=True, null=True, on_delete=models.SET_NULL, related_name='tag')
-    users = models.ForeignKey('User', blank=False, Null=True, on_delete=models.CASCADE, related_name='user')
+    users = models.ForeignKey('User', blank=False, null=True, on_delete=models.CASCADE, related_name='user')
     type = models.BooleanField(default=False, verbose_name='Тип транзакции')
 
     def __str__(self):
