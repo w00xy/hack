@@ -1,5 +1,8 @@
+import re
+
 from django.db import models
 import dadata
+from django.core.exceptions import ValidationError
 
 # Create your models here.
 
@@ -16,10 +19,17 @@ class User(models.Model):
 
     client = dadata.Dadata(token, secret)
 
-    def save(self, *args, **kwargs):
+    def clean(self):
         client = dadata.Dadata(token, secret)
-        result = client.clean(name="phone", source=str(self.phone))
-        self.phone = result['phone']
+        correct_phone = re.match(r'^(\+7|7|8)?[\s\-]?\(?[489][0-9]{2}\)?[\s\-]?[0-9]{3}[\s\-]?[0-9]{2}[\s\-]?[0-9]{2}$', str(self.phone))
+        if correct_phone is not None:
+            result = client.clean(name="phone", source=str(self.phone))
+            self.phone = result['phone']
+        else:
+            raise ValidationError('Неправильный номер телефона')
+
+    def save(self, *args, **kwargs):
+        self.full_clean()  # Вызываем метод clean() перед сохранением объекта
         super().save(*args, **kwargs)
 
     class Meta:
@@ -32,6 +42,7 @@ class Transactions(models.Model):
     tags = models.ForeignKey('Tags', blank=True, null=True, on_delete=models.SET_NULL, related_name='tag')
     users = models.ForeignKey('User', blank=False, null=True, on_delete=models.CASCADE, related_name='user')
     type = models.BooleanField(default=False, verbose_name='Тип транзакции')
+    summ = models.PositiveIntegerField(null=False, verbose_name='Сумма')
 
     def __str__(self):
         return self.name
